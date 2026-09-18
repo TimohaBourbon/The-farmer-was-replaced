@@ -22,5 +22,7 @@ Automation scripts and experiments for "The Farmer Was Replaced".
 - [x] Sunflower logic
 - [x] Cactus sorting
 - [x] Polyculture companion handling
-- [ ] Optimisation of movement
-- [ ] Code clean up and performance optimisation
+- [ ] Use fertilizer to produce Weird Substance
+- [ ] Add maze and Gold farming
+- [ ] Optimise movement and overall performance
+- [ ] Refactor and clean up the script
