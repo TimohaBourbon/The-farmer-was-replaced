@@ -21,4 +21,4 @@ Automation scripts and experiments for "The Farmer Was Replaced".
 - [x] 6x6 pumpkin zone
 - [ ] Sunflower logic
 - [ ] Cactus sorting
-- [ ] Polyculture companion handling
+- [x] Polyculture companion handling

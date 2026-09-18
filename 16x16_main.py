@@ -3,6 +3,7 @@ from __builtins__ import *
 #------------Start from 0---------------------------------------------------------------------
 while get_pos_x() != 0:
     move(East)
+
 while get_pos_y() != 0:
     move(North)
 
@@ -15,6 +16,7 @@ while True:
     plant_type = None
     x_target = None
     y_target = None
+
     for y in range(16):
         for x in range(16):
             x_pos = get_pos_x()
@@ -48,58 +50,101 @@ while True:
             else:
                 current_plant_x = get_pos_x()
                 current_plant_y = get_pos_y()
+
                 if can_harvest():
                     companion = get_companion()
+
                     if companion == None:
                         harvest()
+
                     else:
                         plant_type, (x_target, y_target) = companion
+
+                        # Don't change Pumpkin / Sunflower / Cactus zones
                         if y_target <= 5 or (y_target in [6, 7] and x_target >= 8):
                             pass
+
                         else:
                             while get_pos_x() != x_target:
                                 move(East)
+
                             while get_pos_y() != y_target:
                                 move(North)
-                            plant(plant_type)
+
+                            target_entity = get_entity_type()
+
+                            if target_entity == plant_type:
+                                pass
+
+                            else:
+                                if target_entity != None:
+                                    harvest()
+
+                                if plant_type == Entities.Carrot:
+                                    if get_ground_type() != Grounds.Soil:
+                                        till()
+
+                                else:
+                                    if get_ground_type() == Grounds.Soil:
+                                        till()
+
+                                plant(plant_type)
+
                         while get_pos_x() != current_plant_x:
                             move(East)
+
                         while get_pos_y() != current_plant_y:
                             move(North)
+
                         harvest()
 
+                #------------Base Polyculture Layout------------------------------------------
                 if cell_type == 0:
                     if x_pos % 4 == 0:
                         if ground_type == Grounds.Soil:
                             till()
+
                     elif x_pos % 4 == 1:
                         if ground_type == Grounds.Soil:
                             till()
+
                         plant(Entities.Tree)
+
                     elif x_pos % 4 == 2:
                         if ground_type != Grounds.Soil:
                             till()
+
                         plant(Entities.Carrot)
+
                     elif x_pos % 4 == 3:
                         if ground_type == Grounds.Soil:
                             till()
+
                         plant(Entities.Bush)
+
                 else:
                     if x_pos % 4 == 0:
                         if ground_type != Grounds.Soil:
                             till()
+
                         plant(Entities.Carrot)
+
                     elif x_pos % 4 == 1:
                         if ground_type == Grounds.Soil:
                             till()
+
                         plant(Entities.Bush)
+
                     elif x_pos % 4 == 2:
                         if ground_type == Grounds.Soil:
                             till()
+
                     elif x_pos % 4 == 3:
                         if ground_type == Grounds.Soil:
                             till()
+
                         plant(Entities.Tree)
 
             move(East)
+
         move(North)
