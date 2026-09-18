@@ -1,6 +1,6 @@
 from __builtins__ import *
 
-#------------Start from 0---------------------------------------------------------------------
+#------------Start_from_0---------------------------------------------------------------------
 while get_pos_x() != 0:
     move(East)
 
@@ -9,6 +9,9 @@ while get_pos_y() != 0:
 
 #------------Cycle----------------------------------------------------------------------------
 while True:
+    cactus_ready = True
+    cactus_swapped = False
+    cactus_complete = True
     max_petals = 0
     best_x = None
     best_y = None
@@ -40,11 +43,53 @@ while True:
 
             #------------Sunflower------------------------------------------------------------
             elif x_pos in [6, 7] and y_pos <= 5:
-                pass
+
+                if ground_type != Grounds.Soil:
+                    till()
+                petals = measure()
+
+                if petals != None and petals > max_petals:
+                    max_petals = petals
+                    best_x = x_pos
+                    best_y = y_pos
+                plant(Entities.Sunflower)
 
             #------------Cactus---------------------------------------------------------------
             elif x_pos >= 8 and y_pos <= 7:
-                pass
+
+                if ground_type != Grounds.Soil:
+                    till()
+
+                plant(Entities.Cactus)
+                cactus_size = measure()
+                if cactus_size == None:
+                    cactus_complete = False
+                if x_pos < 15:
+                    move(East)
+                    neighbour_size = measure()
+                    move(West)
+                    if cactus_size != None and neighbour_size != None:
+                        if cactus_size > neighbour_size:
+                            swap(East)
+                            cactus_swapped = True
+                    else:
+                        cactus_complete = False
+                cactus_size = measure()
+                if cactus_size == None:
+                    cactus_complete = False
+                if y_pos < 7:
+                    move(North)
+                    neighbour_size = measure()
+                    move(South)
+                    if cactus_size != None and neighbour_size != None:
+                        if cactus_size > neighbour_size:
+                            swap(North)
+                            cactus_swapped = True
+                    else:
+                        cactus_complete = False
+
+                if not can_harvest():
+                    cactus_ready = False
 
             #------------Polyculture----------------------------------------------------------
             else:
@@ -60,7 +105,6 @@ while True:
                     else:
                         plant_type, (x_target, y_target) = companion
 
-                        # Don't change Pumpkin / Sunflower / Cactus zones
                         if y_target <= 5 or (y_target in [6, 7] and x_target >= 8):
                             pass
 
@@ -98,7 +142,7 @@ while True:
 
                         harvest()
 
-                #------------Base Polyculture Layout------------------------------------------
+                #------------Base_polyculture_layout------------------------------------------
                 if cell_type == 0:
                     if x_pos % 4 == 0:
                         if ground_type == Grounds.Soil:
@@ -147,4 +191,28 @@ while True:
 
             move(East)
 
+        move(North)
+
+    #------------------------Sunflower_harvest------------------------------------------------
+    if best_x != None and best_y != None:
+        while get_pos_x() != best_x:
+            move(East)
+        while get_pos_y() != best_y:
+            move(North)
+
+        if can_harvest():
+            harvest()
+
+    #------------------------Cactus_harvest---------------------------------------------------
+    if not cactus_swapped and cactus_complete and cactus_ready:
+        while get_pos_x() != 8:
+            move(East)
+        while get_pos_y() != 0:
+            move(North)
+        harvest()
+
+    while get_pos_x() != 0:
+        move(East)
+
+    while get_pos_y() != 0:
         move(North)

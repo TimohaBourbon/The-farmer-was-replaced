@@ -19,6 +19,8 @@ Automation scripts and experiments for "The Farmer Was Replaced".
 
 - [x] Field traversal
 - [x] 6x6 pumpkin zone
-- [ ] Sunflower logic
-- [ ] Cactus sorting
+- [x] Sunflower logic
+- [x] Cactus sorting
 - [x] Polyculture companion handling
+- [ ] Optimisation of movement
+- [ ] Code clean up and performance optimisation
