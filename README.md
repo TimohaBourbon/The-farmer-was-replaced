@@ -34,7 +34,7 @@ Automation scripts and experiments for "The Farmer Was Replaced".
 - [x] Optimise movement and overall performance
 - [x] Use multiple drones to manage each farm zone
 - [ ] Refactor and clean up the script
-- [ ] Expand the farm to 22x22
+- [x] Expand the farm to 22x22
 - [ ] Redesign farm zones for the larger field
 - [ ] Scale the multi-drone system for additional farm zones
 - [ ] Improve Power production and resource balance
