@@ -1,86 +1,132 @@
 from __builtins__ import *
 
-#------------Start_from_0---------------------------------------------------------------------
-while get_pos_x() != 0:
-    move(East)
+WORLD_SIZE = 16
 
-while get_pos_y() != 0:
-    move(North)
 
-#------------Cycle----------------------------------------------------------------------------
-while True:
-    cactus_ready = True
-    cactus_swapped = False
-    cactus_complete = True
-    max_petals = 0
-    best_x = None
-    best_y = None
-    pumpkin_id = None
-    plant_type = None
-    x_target = None
-    y_target = None
+#------------Movement------------------------------------------------------------------------
+def move_to(target_x, target_y):
+    current_x = get_pos_x()
 
-    for y in range(16):
-        for x in range(16):
-            x_pos = get_pos_x()
-            y_pos = get_pos_y()
-            cell_type = (x_pos + y_pos) % 2
-            ground_type = get_ground_type()
+    east_distance = (target_x - current_x) % WORLD_SIZE
+    west_distance = (current_x - target_x) % WORLD_SIZE
 
-            #------------Pumpkin--------------------------------------------------------------
-            if x_pos == 0 and y_pos == 0:
-                pumpkin_id = measure()
+    if east_distance <= west_distance:
+        for i in range(east_distance):
+            move(East)
+    else:
+        for i in range(west_distance):
+            move(West)
 
-            if x_pos == 5 and y_pos == 5:
-                if pumpkin_id != None and measure() == pumpkin_id:
-                    harvest()
 
-            if x_pos <= 5 and y_pos <= 5:
-                if ground_type != Grounds.Soil:
+    current_y = get_pos_y()
+
+    north_distance = (target_y - current_y) % WORLD_SIZE
+    south_distance = (current_y - target_y) % WORLD_SIZE
+
+    if north_distance <= south_distance:
+        for i in range(north_distance):
+            move(North)
+    else:
+        for i in range(south_distance):
+            move(South)
+
+
+#------------Pumpkin_Drone-------------------------------------------------------------------
+def pumpkin_worker():
+
+    while True:
+        move_to(0, 0)
+
+        pumpkin_id = measure()
+
+        for y in range(6):
+            for x in range(6):
+                move_to(x, y)
+
+                if x == 5 and y == 5:
+                    if pumpkin_id != None and measure() == pumpkin_id:
+                        harvest()
+
+                if get_ground_type() != Grounds.Soil:
                     till()
 
                 plant(Entities.Pumpkin)
 
-            #------------Sunflower------------------------------------------------------------
-            elif x_pos in [6, 7] and y_pos <= 5:
 
-                if ground_type != Grounds.Soil:
+#------------Sunflower_Drone-----------------------------------------------------------------
+def sunflower_worker():
+
+    while True:
+        max_petals = 0
+        best_x = None
+        best_y = None
+
+        for y in range(6):
+            for x in range(6, 8):
+                move_to(x, y)
+
+                if get_ground_type() != Grounds.Soil:
                     till()
+
                 petals = measure()
 
                 if petals != None and petals > max_petals:
                     max_petals = petals
-                    best_x = x_pos
-                    best_y = y_pos
+                    best_x = x
+                    best_y = y
+
                 plant(Entities.Sunflower)
 
-            #------------Cactus---------------------------------------------------------------
-            elif x_pos >= 8 and y_pos <= 7:
+        if best_x != None and best_y != None:
+            move_to(best_x, best_y)
 
-                if ground_type != Grounds.Soil:
+            if can_harvest():
+                harvest()
+
+
+#------------Cactus_Drone--------------------------------------------------------------------
+def cactus_worker():
+
+    while True:
+        cactus_ready = True
+        cactus_swapped = False
+        cactus_complete = True
+
+        for y in range(8):
+            for x in range(8, 16):
+                move_to(x, y)
+
+                if get_ground_type() != Grounds.Soil:
                     till()
 
                 plant(Entities.Cactus)
+
                 cactus_size = measure()
+
                 if cactus_size == None:
                     cactus_complete = False
-                if x_pos < 15:
-                    move(East)
-                    neighbour_size = measure()
-                    move(West)
+
+
+                if x < 15:
+                    neighbour_size = measure(East)
+
                     if cactus_size != None and neighbour_size != None:
                         if cactus_size > neighbour_size:
                             swap(East)
                             cactus_swapped = True
                     else:
                         cactus_complete = False
+
+
                 cactus_size = measure()
+
                 if cactus_size == None:
                     cactus_complete = False
-                if y_pos < 7:
-                    move(North)
-                    neighbour_size = measure()
-                    move(South)
+
+
+                if y < 7:
+                    neighbour_size = measure(North)
+
                     if cactus_size != None and neighbour_size != None:
                         if cactus_size > neighbour_size:
                             swap(North)
@@ -88,15 +134,45 @@ while True:
                     else:
                         cactus_complete = False
 
+
                 if not can_harvest():
                     cactus_ready = False
 
-            #------------Polyculture----------------------------------------------------------
-            else:
-                current_plant_x = get_pos_x()
-                current_plant_y = get_pos_y()
 
+        if not cactus_swapped and cactus_complete and cactus_ready:
+            move_to(8, 0)
+            harvest()
+
+
+#------------Polyculture_Drone---------------------------------------------------------------
+def polyculture_worker():
+
+    while True:
+
+        for y in range(6, 16):
+
+            if y < 8:
+                row_width = 8
+            else:
+                row_width = 16
+
+
+            for x in range(row_width):
+                move_to(x, y)
+
+                x_pos = get_pos_x()
+                y_pos = get_pos_y()
+
+                cell_type = (x_pos + y_pos) % 2
+                ground_type = get_ground_type()
+
+                current_plant_x = x_pos
+                current_plant_y = y_pos
+
+
+                #------------Companion--------------------------------------------------------
                 if can_harvest():
+
                     companion = get_companion()
 
                     if companion == None:
@@ -105,15 +181,13 @@ while True:
                     else:
                         plant_type, (x_target, y_target) = companion
 
+
+                        # Don't touch Pumpkin / Sunflower / Cactus zones
                         if y_target <= 5 or (y_target in [6, 7] and x_target >= 8):
                             pass
 
                         else:
-                            while get_pos_x() != x_target:
-                                move(East)
-
-                            while get_pos_y() != y_target:
-                                move(North)
+                            move_to(x_target, y_target)
 
                             target_entity = get_entity_type()
 
@@ -134,19 +208,19 @@ while True:
 
                                 plant(plant_type)
 
-                        while get_pos_x() != current_plant_x:
-                            move(East)
 
-                        while get_pos_y() != current_plant_y:
-                            move(North)
+                        move_to(current_plant_x, current_plant_y)
 
                         harvest()
 
-                #------------Base_polyculture_layout------------------------------------------
+
+                #------------Base_Polyculture_Layout-----------------------------------------
                 if cell_type == 0:
+
                     if x_pos % 4 == 0:
                         if ground_type == Grounds.Soil:
                             till()
+
 
                     elif x_pos % 4 == 1:
                         if ground_type == Grounds.Soil:
@@ -154,24 +228,29 @@ while True:
 
                         plant(Entities.Tree)
 
+
                     elif x_pos % 4 == 2:
                         if ground_type != Grounds.Soil:
                             till()
 
                         plant(Entities.Carrot)
 
+
                     elif x_pos % 4 == 3:
                         if ground_type == Grounds.Soil:
                             till()
 
                         plant(Entities.Bush)
+
 
                 else:
+
                     if x_pos % 4 == 0:
                         if ground_type != Grounds.Soil:
                             till()
 
                         plant(Entities.Carrot)
+
 
                     elif x_pos % 4 == 1:
                         if ground_type == Grounds.Soil:
@@ -179,9 +258,11 @@ while True:
 
                         plant(Entities.Bush)
 
+
                     elif x_pos % 4 == 2:
                         if ground_type == Grounds.Soil:
                             till()
+
 
                     elif x_pos % 4 == 3:
                         if ground_type == Grounds.Soil:
@@ -189,30 +270,23 @@ while True:
 
                         plant(Entities.Tree)
 
-            move(East)
 
-        move(North)
+                #------------Fertilizer------------------------------------------------------
+                if get_entity_type() != None:
+                    if not can_harvest():
+                        if num_items(Items.Fertilizer) > 0:
+                            use_item(Items.Fertilizer)
 
-    #------------------------Sunflower_harvest------------------------------------------------
-    if best_x != None and best_y != None:
-        while get_pos_x() != best_x:
-            move(East)
-        while get_pos_y() != best_y:
-            move(North)
 
-        if can_harvest():
-            harvest()
+#------------Start---------------------------------------------------------------------------
+move_to(0, 0)
 
-    #------------------------Cactus_harvest---------------------------------------------------
-    if not cactus_swapped and cactus_complete and cactus_ready:
-        while get_pos_x() != 8:
-            move(East)
-        while get_pos_y() != 0:
-            move(North)
-        harvest()
+if max_drones() >= 4:
 
-    while get_pos_x() != 0:
-        move(East)
+    spawn_drone(pumpkin_worker)
+    spawn_drone(sunflower_worker)
+    spawn_drone(cactus_worker)
+    polyculture_worker()
 
-    while get_pos_y() != 0:
-        move(North)
+else:
+    quick_print("At least 4 drones are required.")
